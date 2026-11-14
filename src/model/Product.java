@@ -3,7 +3,7 @@ package model;
 import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class Product implements Serializable, Cloneable, Identifiable{
+public abstract class Product implements Serializable, Cloneable, Identifiable, Comparable<Product> {
     private static final long serialVersionUID = 1L;
 
     private String id;
@@ -18,7 +18,6 @@ public abstract class Product implements Serializable, Cloneable, Identifiable{
         this.category = category;
     }
 
-
     public abstract void displayProductDetails();
     public abstract String getDeliveryInfo();
 
@@ -29,6 +28,10 @@ public abstract class Product implements Serializable, Cloneable, Identifiable{
 
     public void setPrice(double price) { this.price = price; }
 
+    @Override
+    public int compareTo(Product other) {
+        return Double.compare(this.price, other.price);
+    }
 
     @Override
     public String toString() {
@@ -51,11 +54,10 @@ public abstract class Product implements Serializable, Cloneable, Identifiable{
         return Objects.hash(id, name, price, category);
     }
 
-
     @Override
     public Product clone() {
         try {
-            return (Product) super.clone(); // поверхневе копіювання
+            return (Product) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
         }
