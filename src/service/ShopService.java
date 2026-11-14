@@ -1,30 +1,36 @@
 package service;
 
+import exception.InvalidPriceException;
+import exception.ProductNotFoundException;
+import exception.ShopException;
 import model.*;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ShopService {
-    private List<Product> catalog = new ArrayList<>();
-    private final String FILE_NAME = "shop_data_lab4.ser";
+    private Repository<Product, String> productRepository = new Repository<>();
+    private final String FILE_NAME = "shop_data_lab5.ser";
 
     public ShopService() {
         loadData();
-        if (catalog.isEmpty()) {
-            catalog.add(new Electronics("1", "Ноутбук", 25000.0, 12));
-            catalog.add(new Electronics("2", "Мишка", 750.0, 6));
-            catalog.add(new Clothing("3", "Худі", 1200.0, "M"));
-            catalog.add(new Clothing("4", "Куртка", 3500.0, "L"));
+        if (productRepository.getAll().isEmpty()) {
+            productRepository.add(new Electronics("1", "Ноутбук", 25000.0, 12));
+            productRepository.add(new Electronics("2", "Мишка", 750.0, 6));
+            productRepository.add(new Clothing("3", "Худі", 1200.0, "M"));
         }
     }
 
-    public void addProduct(Product product) {
-        catalog.add(product);
+    public void addProduct(Product product) throws ShopException {
+        if (product.getPrice() <= 0) {
+            throw new InvalidPriceException(product.getPrice());
+        }
+        productRepository.add(product);
         saveData();
     }
 
     public void showCatalogPage(int page, int pageSize) {
+        List<Product> catalog = productRepository.getAll();
         int totalProducts = catalog.size();
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
 
@@ -38,33 +44,36 @@ public class ShopService {
         int end = Math.min(start + pageSize, totalProducts);
 
         for (int i = start; i < end; i++) {
-
             catalog.get(i).displayProductDetails();
         }
         System.out.println("------------------------------------");
     }
 
+    public Product getProductById(String id) throws ProductNotFoundException {
+        Optional<Product> optionalProduct = productRepository.findById(id);
 
-    public void processProductSpecificFeatures(Product product) {
-        System.out.println("\n--- Аналіз специфіки товару ---");
-        if (product instanceof Electronics el) {
-            System.out.println("Це електроніка. Знижка на обслуговування доступна. Гарантія діє.");
-        } else if (product instanceof Clothing cl) {
-            System.out.println("Це одяг. Доступна послуга примірки у відділенні.");
-        } else {
-            System.out.println("Загальний товар.");
-        }
+
+        return optionalProduct.orElseThrow(() -> new ProductNotFoundException(id));
     }
 
-    public Product getProductById(String id) {
-        return catalog.stream().filter(p -> p.getId().equals(id)).findFirst().orElse(null);
+
+    public void printTotalCatalogPrice(List<? extends Product> products) {
+        double sum = 0;
+        for (Product p : products) {
+            sum += p.getPrice();
+        }
+        System.out.printf("Загальна вартість усіх товарів у вибірці: %.2f грн\n", sum);
+    }
+
+    public List<Product> getAllProducts() {
+        return productRepository.getAll();
     }
 
     public void saveData() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
-            oos.writeObject(catalog);
+            oos.writeObject(productRepository);
         } catch (IOException e) {
-            System.out.println("Помилка збереження: " + e.getMessage());
+            System.out.println("Помилка збереження файлу: " + e.getMessage());
         }
     }
 
@@ -72,10 +81,11 @@ public class ShopService {
     public void loadData() {
         File file = new File(FILE_NAME);
         if (!file.exists()) return;
+
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            catalog = (List<Product>) ois.readObject();
+            productRepository = (Repository<Product, String>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Помилка завантаження: " + e.getMessage());
+            System.out.println("Помилка завантаження файлу: " + e.getMessage());
         }
     }
 }

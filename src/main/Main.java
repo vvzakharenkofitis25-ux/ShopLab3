@@ -1,5 +1,8 @@
 package main;
 
+import exception.InvalidPriceException;
+import exception.ProductNotFoundException;
+import exception.ShopException;
 import model.*;
 import service.ShopService;
 import java.util.Scanner;
@@ -11,16 +14,16 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
 
-        System.out.println("Вітаємо в інтернет-магазині (Лабораторна робота №4)!");
+        System.out.println("Вітаємо в інтернет-магазині (Лабораторна робота №5)!");
 
         while (running) {
             System.out.println("\nОберіть дію:");
-            System.out.println("1. Переглянути каталог (поліморфізм)");
-            System.out.println("2. Додати товар у кошик");
-            System.out.println("3. Переглянути кошик та рахунок (з enum статусом)");
-            System.out.println("4. Протестувати клонування кошика (Deep vs Shallow copy)");
-            System.out.println("5. Використати SearchCriteria Record для пошуку");
-            System.out.println("6. Перевірити специфіку товару (instanceof pattern matching)");
+            System.out.println("1. Переглянути каталог");
+            System.out.println("2. Додати товар у кошик (з перевіркою Optional та винятків)");
+            System.out.println("3. Переглянути кошик та рахунок");
+            System.out.println("4. Протестувати додавання товару з некоректною ціною (Unchecked Exception)");
+            System.out.println("5. Протестувати пошук неіснуючого товару (Checked Exception)");
+            System.out.println("6. Викликати узагальнений метод з wildcard (? extends Product)");
             System.out.println("0. Вихід");
             System.out.print("Ваш вибір: ");
 
@@ -29,51 +32,57 @@ public class Main {
 
             switch (choice) {
                 case 1:
-                    System.out.println("Введіть сторінку (наприклад, 1): ");
+                    System.out.print("Введіть сторінку: ");
                     int page = scanner.nextInt();
                     service.showCatalogPage(page, 2);
                     break;
                 case 2:
-                    System.out.println("Введіть ID товару: ");
+                    System.out.print("Введіть ID товару для кошика: ");
                     String pId = scanner.nextLine();
-                    Product p = service.getProductById(pId);
-                    if (p != null) {
-                        System.out.println("Введіть кількість: ");
+
+                    try {
+                        Product p = service.getProductById(pId);
+                        System.out.print("Введіть кількість: ");
                         int qty = scanner.nextInt();
                         cart.addProduct(p, qty);
-                        cart.setStatus(OrderStatus.PROCESSING);
-                        System.out.println("Товар додано! Статус змінено на: " + OrderStatus.PROCESSING.getUkrainianName());
-                    } else {
-                        System.out.println("Товар не знайдено.");
+                        System.out.println("Товар успішно додано до кошика!");
+                    } catch (ProductNotFoundException e) {
+                        System.out.println("[ПОМИЛКА УПРАВЛІННЯ]: " + e.getMessage());
                     }
                     break;
                 case 3:
                     cart.generateInvoice();
                     break;
                 case 4:
+                    try {
+                        System.out.print("Введіть ID нового товару: ");
+                        String nId = scanner.nextLine();
+                        System.out.print("Введіть назву: ");
+                        String nName = scanner.nextLine();
+                        System.out.print("Введіть ціну (спробуйте ввести від'ємну): ");
+                        double nPrice = scanner.nextDouble();
+                        scanner.nextLine();
 
-                    Cart clonedCart = cart.clone();
-                    System.out.println("Кошик успішно клоновано (deep copy створено)!");
-                    System.out.println("Оригінал сума: " + cart.getTotalAmount() + " | Клон сума: " + clonedCart.getTotalAmount());
+                        Electronics badProduct = new Electronics(nId, nName, nPrice, 12);
+                        service.addProduct(badProduct);
+                        System.out.println("Товар успішно додано!");
+                    } catch (InvalidPriceException e) {
+                        System.out.println("[КЕРУВАННЯ ВИНЯТКОМ UNCHECKED]: " + e.getMessage());
+                    } catch (ShopException e) {
+                        System.out.println("[ПОМИЛКА]: " + e.getMessage());
+                    }
                     break;
                 case 5:
-
-                    System.out.println("Введіть ключове слово для пошуку: ");
-                    String kw = scanner.nextLine();
-                    System.out.println("Введіть максимальну ціну: ");
-                    double maxPr = scanner.nextDouble();
-                    SearchCriteria criteria = new SearchCriteria(kw, maxPr);
-                    System.out.println("Створено пошуковий Record: " + criteria);
+                    System.out.print("Введіть неіснуючий ID (наприклад, 999): ");
+                    String fakeId = scanner.nextLine();
+                    try {
+                        service.getProductById(fakeId);
+                    } catch (ProductNotFoundException e) {
+                        System.out.println("Спіймано очікуваний checked виняток: " + e.getMessage());
+                    }
                     break;
                 case 6:
-                    System.out.println("Введіть ID товару для перевірки специфіки: ");
-                    String specId = scanner.nextLine();
-                    Product sp = service.getProductById(specId);
-                    if (sp != null) {
-                        service.processProductSpecificFeatures(sp);
-                    } else {
-                        System.out.println("Товар не знайдено.");
-                    }
+                    service.printTotalCatalogPrice(service.getAllProducts());
                     break;
                 case 0:
                     running = false;

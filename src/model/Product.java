@@ -3,7 +3,7 @@ package model;
 import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class Product implements Serializable, Cloneable {
+public abstract class Product implements Serializable, Cloneable, Identifiable{
     private static final long serialVersionUID = 1L;
 
     private String id;
