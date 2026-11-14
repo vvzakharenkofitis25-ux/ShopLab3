@@ -1,32 +1,26 @@
 package service;
 
-import model.Product;
+import model.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ShopService {
     private List<Product> catalog = new ArrayList<>();
-    private final String FILE_NAME = "shop_data.ser";
+    private final String FILE_NAME = "shop_data_lab4.ser";
 
     public ShopService() {
         loadData();
         if (catalog.isEmpty()) {
-            catalog.add(new Product("1", "Ноутбук", 25000.0, "Електроніка"));
-            catalog.add(new Product("2", "Мишка", 750.0, "Електроніка"));
-            catalog.add(new Product("3", "Клавіатура", 1500.0, "Електроніка"));
-            catalog.add(new Product("4", "Чашка", 200.0, "Дім"));
-            catalog.add(new Product("5", "Плед", 800.0, "Дім"));
+            catalog.add(new Electronics("1", "Ноутбук", 25000.0, 12));
+            catalog.add(new Electronics("2", "Мишка", 750.0, 6));
+            catalog.add(new Clothing("3", "Худі", 1200.0, "M"));
+            catalog.add(new Clothing("4", "Куртка", 3500.0, "L"));
         }
     }
 
     public void addProduct(Product product) {
         catalog.add(product);
-        saveData();
-    }
-
-    public void removeProduct(String id) {
-        catalog.removeIf(p -> p.getId().equals(id));
         saveData();
     }
 
@@ -44,9 +38,22 @@ public class ShopService {
         int end = Math.min(start + pageSize, totalProducts);
 
         for (int i = start; i < end; i++) {
-            System.out.println(catalog.get(i));
+
+            catalog.get(i).displayProductDetails();
         }
         System.out.println("------------------------------------");
+    }
+
+
+    public void processProductSpecificFeatures(Product product) {
+        System.out.println("\n--- Аналіз специфіки товару ---");
+        if (product instanceof Electronics el) {
+            System.out.println("Це електроніка. Знижка на обслуговування доступна. Гарантія діє.");
+        } else if (product instanceof Clothing cl) {
+            System.out.println("Це одяг. Доступна послуга примірки у відділенні.");
+        } else {
+            System.out.println("Загальний товар.");
+        }
     }
 
     public Product getProductById(String id) {
@@ -57,7 +64,7 @@ public class ShopService {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
             oos.writeObject(catalog);
         } catch (IOException e) {
-            System.out.println("Помилка збереження даних: " + e.getMessage());
+            System.out.println("Помилка збереження: " + e.getMessage());
         }
     }
 
@@ -68,7 +75,7 @@ public class ShopService {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
             catalog = (List<Product>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Помилка завантаження даних: " + e.getMessage());
+            System.out.println("Помилка завантаження: " + e.getMessage());
         }
     }
 }

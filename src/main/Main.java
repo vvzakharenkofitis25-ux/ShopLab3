@@ -1,7 +1,6 @@
 package main;
 
-import model.Cart;
-import model.Product;
+import model.*;
 import service.ShopService;
 import java.util.Scanner;
 
@@ -12,16 +11,17 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
 
-        System.out.println("Вітаємо в консольному інтернет-магазині!");
+        System.out.println("Вітаємо в інтернет-магазині (Лабораторна робота №4)!");
 
         while (running) {
             System.out.println("\nОберіть дію:");
-            System.out.println("1. Переглянути каталог (з пагінацією)");
+            System.out.println("1. Переглянути каталог (поліморфізм)");
             System.out.println("2. Додати товар у кошик");
-            System.out.println("3. Переглянути кошик та рахунок-фактуру");
-            System.out.println("4. Додати новий товар до магазину");
-            System.out.println("5. Видалити товар з магазину");
-            System.out.println("0. Вихід (збереження даних)");
+            System.out.println("3. Переглянути кошик та рахунок (з enum статусом)");
+            System.out.println("4. Протестувати клонування кошика (Deep vs Shallow copy)");
+            System.out.println("5. Використати SearchCriteria Record для пошуку");
+            System.out.println("6. Перевірити специфіку товару (instanceof pattern matching)");
+            System.out.println("0. Вихід");
             System.out.print("Ваш вибір: ");
 
             int choice = scanner.nextInt();
@@ -29,19 +29,20 @@ public class Main {
 
             switch (choice) {
                 case 1:
-                    System.out.print("Введіть номер сторінки (наприклад, 1): ");
+                    System.out.println("Введіть сторінку (наприклад, 1): ");
                     int page = scanner.nextInt();
                     service.showCatalogPage(page, 2);
                     break;
                 case 2:
-                    System.out.print("Введіть ID товару для додавання в кошик: ");
+                    System.out.println("Введіть ID товару: ");
                     String pId = scanner.nextLine();
                     Product p = service.getProductById(pId);
                     if (p != null) {
-                        System.out.print("Введіть кількість: ");
+                        System.out.println("Введіть кількість: ");
                         int qty = scanner.nextInt();
                         cart.addProduct(p, qty);
-                        System.out.println("Товар додано до кошика!");
+                        cart.setStatus(OrderStatus.PROCESSING);
+                        System.out.println("Товар додано! Статус змінено на: " + OrderStatus.PROCESSING.getUkrainianName());
                     } else {
                         System.out.println("Товар не знайдено.");
                     }
@@ -50,31 +51,36 @@ public class Main {
                     cart.generateInvoice();
                     break;
                 case 4:
-                    System.out.print("Введіть ID: ");
-                    String id = scanner.nextLine();
-                    System.out.print("Введіть назву: ");
-                    String name = scanner.nextLine();
-                    System.out.print("Введіть ціну: ");
-                    double price = scanner.nextDouble();
-                    scanner.nextLine();
-                    System.out.println("Введіть категорію: ");
-                    String cat = scanner.nextLine();
 
-                    service.addProduct(new Product(id, name, price, cat));
-                    System.out.println("Товар успішно додано до каталогу!");
+                    Cart clonedCart = cart.clone();
+                    System.out.println("Кошик успішно клоновано (deep copy створено)!");
+                    System.out.println("Оригінал сума: " + cart.getTotalAmount() + " | Клон сума: " + clonedCart.getTotalAmount());
                     break;
                 case 5:
-                    System.out.print("Введіть ID товару для видалення: ");
-                    String remId = scanner.nextLine();
-                    service.removeProduct(remId);
-                    System.out.println("Товар видалено.");
+
+                    System.out.println("Введіть ключове слово для пошуку: ");
+                    String kw = scanner.nextLine();
+                    System.out.println("Введіть максимальну ціну: ");
+                    double maxPr = scanner.nextDouble();
+                    SearchCriteria criteria = new SearchCriteria(kw, maxPr);
+                    System.out.println("Створено пошуковий Record: " + criteria);
+                    break;
+                case 6:
+                    System.out.println("Введіть ID товару для перевірки специфіки: ");
+                    String specId = scanner.nextLine();
+                    Product sp = service.getProductById(specId);
+                    if (sp != null) {
+                        service.processProductSpecificFeatures(sp);
+                    } else {
+                        System.out.println("Товар не знайдено.");
+                    }
                     break;
                 case 0:
                     running = false;
-                    System.out.println("Роботу завершено. Дані збережено успішно!");
+                    System.out.println("Роботу завершено!");
                     break;
                 default:
-                    System.out.println("Невірний вибір. Спробуйте ще раз.");
+                    System.out.println("Невірний вибір.");
             }
         }
         scanner.close();
