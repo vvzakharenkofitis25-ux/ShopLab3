@@ -12,16 +12,13 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
 
-        System.out.println("Вітаємо в інтернет-магазині (Лабораторна робота №8)!");
+        System.out.println("Вітаємо в інтернет-магазині (Лабораторна робота №10)!");
 
         while (running) {
             System.out.println("\nОберіть дію:");
             System.out.println("1. Переглянути каталог");
-            System.out.println("2. Сортування товарів (Comparable / Comparator)");
-            System.out.println("3. Перевірити власний ітератор");
-            System.out.println("4. Протестувати TreeSet / TreeMap (діапазони цін)");
-            System.out.println("5. Протестувати власне Бінарне дерево пошуку (BST)");
-            System.out.println("6. Запустити бенчмарк (ArrayList vs LinkedList)");
+            System.out.println("2. Імпортувати новий товар з CSV (з викликом Observer)");
+            System.out.println("3. Протестувати поведінкові патерни (Strategy & Observer) [ЛР10]");
             System.out.println("0. Вихід");
             System.out.print("Ваш вибір: ");
 
@@ -33,21 +30,18 @@ public class Main {
                     service.showCatalogPage(1, 5);
                     break;
                 case 2:
-                    System.out.println("Оберіть тип сортування: 1 - за ціною (Comparable), 2 - за назвою (Comparator), 3 - за категорією");
-                    int sortType = scanner.nextInt();
-                    service.sortAndDisplayProducts(sortType);
+                    System.out.print("Введіть товар у форматі CSV (напр: 10,планшет,електроніка,12000): ");
+                    String csv = scanner.nextLine();
+                    try {
+                        Product p = processor.parseProductFromCsv(csv);
+                        service.addProduct(p); // Тут спрацює Спостерігач
+                        System.out.println("Товар успішно додано!");
+                    } catch (Exception e) {
+                        System.out.println("Помилка: " + e.getMessage());
+                    }
                     break;
                 case 3:
-                    service.demoCustomIterator();
-                    break;
-                case 4:
-                    service.demoTreeSetAndMap();
-                    break;
-                case 5:
-                    service.demoBinarySearchTree();
-                    break;
-                case 6:
-                    service.runListBenchmark();
+                    service.demoBehavioralPatterns();
                     break;
                 case 0:
                     running = false;
